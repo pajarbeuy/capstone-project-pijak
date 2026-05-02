@@ -1,0 +1,20 @@
+# Dataset mentah (ukuran besar — simpan di Google Drive)
+data/raw/
+
+# File CSV besar di processed (opsional, tergantung ukuran)
+data/processed/vibesight_clean_full_v1.0.csv
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Environment
+.env
+venv/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
