@@ -2,24 +2,50 @@ import json
 
 import pandas as pd
 import streamlit as st
+from sklearn.model_selection import train_test_split
 
-from utils.paths import DATA_PATH, METADATA_PATH, TEST_PATH, TRAIN_PATH
+from utils.paths import DATA_PATH, METADATA_PATH
+
+
+LABEL_TO_ID = {"negative": 0, "neutral": 1, "positive": 2}
+TEXT_FEATURE_COL = "text_akhir"
+TARGET_COL = "polarity"
+
+
+def prepare_notebook02_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    if "sentiment_label" in df.columns and "original_sentiment_label" not in df.columns:
+        df["original_sentiment_label"] = df["sentiment_label"]
+
+    df["sentiment_label"] = df[TARGET_COL].astype(str)
+    df["sentiment_encoded"] = df["sentiment_label"].map(LABEL_TO_ID).astype("Int64")
+    df["review_text_stemmed"] = df[TEXT_FEATURE_COL]
+
+    if "review_word_count" not in df.columns:
+        df["review_word_count"] = df["review_text_stemmed"].fillna("").astype(str).str.split().str.len()
+    return df
 
 
 @st.cache_data(show_spinner=False)
 def load_dataset() -> pd.DataFrame:
-    return pd.read_csv(DATA_PATH)
+    return prepare_notebook02_dataset(pd.read_csv(DATA_PATH))
 
 
 @st.cache_data(show_spinner=False)
 def load_modeling_dataset() -> pd.DataFrame:
-    df = pd.read_csv(DATA_PATH)
-    return df.dropna(subset=["review_text_stemmed"]).reset_index(drop=True)
+    return load_dataset().reset_index(drop=True)
 
 
 @st.cache_data(show_spinner=False)
 def load_train_test() -> tuple[pd.DataFrame, pd.DataFrame]:
-    return pd.read_csv(TRAIN_PATH), pd.read_csv(TEST_PATH)
+    df = load_modeling_dataset()
+    train, test = train_test_split(
+        df,
+        test_size=0.2,
+        random_state=42,
+        stratify=df["sentiment_label"],
+    )
+    return train.reset_index(drop=True), test.reset_index(drop=True)
 
 
 @st.cache_data(show_spinner=False)

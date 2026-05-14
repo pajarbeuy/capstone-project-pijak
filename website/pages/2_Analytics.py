@@ -15,7 +15,7 @@ from utils.ui import page_hero, setup_page
 setup_page("Analytics", "📊")
 page_hero(
     "Analytics Review",
-    "Eksplorasi kata, panjang review, dan pola distribusi sentimen dari dataset final.",
+    "Eksplorasi kata, panjang review, dan distribusi `polarity` dari dataset notebook 02.",
 )
 
 df = load_dataset()

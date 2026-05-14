@@ -13,7 +13,7 @@ except ImportError:
     WordCloud = None
 
 from utils.modeling import load_model_assets
-from utils.ui import LABEL_COLORS, LABEL_ID
+from utils.ui import LABEL_COLORS
 
 
 PLOTLY_TEMPLATE = "plotly_dark"
@@ -126,8 +126,8 @@ def build_wordcloud(df: pd.DataFrame, label: str | None = None):
 @st.cache_data(show_spinner=False)
 def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     model, vectorizer = load_model_assets()
-    x = df_clean["review_text_stemmed"].astype(str).values
-    y = df_clean["sentiment_encoded"].astype(int).values
+    x = df_clean["review_text_stemmed"].fillna("").astype(str).values
+    y = df_clean["sentiment_label"].astype(str).values
 
     x_train, x_test, y_train, y_true = train_test_split(
         x,
@@ -145,25 +145,25 @@ def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
     report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
     report_df = pd.DataFrame(report).T.reset_index().rename(columns={"index": "metric"})
 
-    labels = [0, 1, 2]
+    labels = ["negative", "neutral", "positive"]
     matrix = confusion_matrix(y_true, y_pred, labels=labels)
     matrix_df = pd.DataFrame(
         matrix,
-        index=[LABEL_ID[i] for i in labels],
-        columns=[LABEL_ID[i] for i in labels],
+        index=labels,
+        columns=labels,
     )
     metadata = {
         "train_size": int(len(x_train)),
         "test_size": int(len(x_test)),
         "train_accuracy": float((y_train_pred == y_train).mean()),
-        "best_params": {"svc__C": 0.1, "svc__loss": "squared_hinge"},
-        "cv_macro_f1": 0.5395,
+        "best_params": {"svm__C": 1, "svm__kernel": "linear"},
+        "macro_f1": float(report["macro avg"]["f1-score"]),
         "tfidf": {
-            "max_features": 20000,
+            "max_features": 10000,
             "ngram_range": "(1, 2)",
-            "min_df": 2,
-            "max_df": 0.95,
-            "sublinear_tf": True,
+            "min_df": 17,
+            "max_df": 0.8,
+            "sublinear_tf": False,
         },
     }
     return report_df, matrix_df, metadata

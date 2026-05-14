@@ -13,7 +13,7 @@ summary = sentiment_summary(df)
 
 page_hero(
     "Sentiment Dashboard",
-    "Dashboard analisis sentimen review produk Tokopedia berbasis TF-IDF dan SVM.",
+    "Dashboard analisis sentimen review produk Tokopedia berbasis pipeline notebook 02.",
 )
 
 total_reviews = len(df)
@@ -48,8 +48,8 @@ with col_a:
         """
         Dashboard membantu membaca pola sentimen dari ribuan review produk dengan tampilan
         yang lebih mudah dipahami untuk presentasi capstone. Model utama memakai teks yang
-        sudah diproses lewat pipeline Bahasa Indonesia, kemudian direpresentasikan dengan
-        TF-IDF dan diklasifikasikan oleh SVM.
+        sudah diproses sebagai `text_akhir`, label lexicon `polarity`, lalu TF-IDF dan
+        SVM linear dari notebook 02 bagian Data Murni.
         """
     )
 with col_b:
@@ -67,6 +67,10 @@ with st.expander("Detail dataset dan pipeline"):
             "train_size": metadata.get("train_size"),
             "test_size": metadata.get("test_size"),
             "stemmer": metadata.get("stemmer", "PySastrawi"),
-            "label_mapping": metadata.get("label_mapping", {"negative": 0, "neutral": 1, "positive": 2}),
+            "dataset": "data/fix_tokopedia_reviews.csv",
+            "feature_column": "text_akhir",
+            "target_column": "polarity",
+            "model_artifact": "modeling/model_save/model_svm.pkl",
+            "vectorizer_artifact": "modeling/tfidf_vectorizer.pkl",
         }
     )

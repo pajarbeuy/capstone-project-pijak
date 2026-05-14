@@ -9,7 +9,7 @@ from utils.ui import page_hero, setup_page
 setup_page("Model Performance", "M")
 page_hero(
     "Evaluasi Model SVM",
-    "Metrik dihitung ulang mengikuti notebook modeling: drop null, split stratified 80:20, TF-IDF, lalu SVM terbaik.",
+    "Metrik mengikuti output notebook 02 bagian SVM Data Murni: text_akhir, polarity, split stratified 80:20, TF-IDF, lalu SVC linear.",
 )
 
 df_clean = load_modeling_dataset()
@@ -30,7 +30,7 @@ col4.metric("F1 Macro", f"{macro['f1-score']:.2%}")
 
 st.caption(
     f"Split modeling: {meta['train_size']:,} data training dan {meta['test_size']:,} data testing. "
-    "Dataset memakai `df_clean = df_data.dropna(subset=['review_text_stemmed'])`."
+    "Dataset memakai `fix_tokopedia_reviews.csv`, fitur `text_akhir`, target `polarity`, dan nilai kosong diisi string kosong untuk TF-IDF."
 )
 
 left, right = st.columns([1.05, 0.95])
@@ -47,42 +47,41 @@ with right:
 
 st.subheader("Hasil Modeling Notebook")
 model_cols = st.columns(4)
-model_cols[0].metric("Best CV Macro F1", f"{meta['cv_macro_f1']:.2%}")
-model_cols[1].metric("Best C", str(meta["best_params"]["svc__C"]))
-model_cols[2].metric("Best Loss", meta["best_params"]["svc__loss"])
+model_cols[0].metric("Macro F1 Notebook", f"{meta['macro_f1']:.2%}")
+model_cols[1].metric("SVM C", str(meta["best_params"]["svm__C"]))
+model_cols[2].metric("Kernel", meta["best_params"]["svm__kernel"])
 model_cols[3].metric("TF-IDF Features", f"{meta['tfidf']['max_features']:,}")
 
 comparison = pd.DataFrame(
     [
-        {"Model": "LinearSVC + TF-IDF", "Training Accuracy": 0.9874, "Testing Accuracy": 0.9710, "Macro F1": 0.5632},
-        {"Model": "Tuned LinearSVC + TF-IDF", "Training Accuracy": 0.9914, "Testing Accuracy": 0.9740, "Macro F1": 0.5738},
-        {"Model": "Random Forest + TF-IDF", "Training Accuracy": 0.9981, "Testing Accuracy": 0.9749, "Macro F1": 0.3795},
-        {"Model": "Logistic Regression + SMOTE", "Training Accuracy": 0.9508, "Testing Accuracy": 0.9217, "Macro F1": 0.4838},
-        {"Model": "BiLSTM + Class Weight", "Training Accuracy": 0.9654, "Testing Accuracy": 0.9400, "Macro F1": 0.4826},
+        {"Model": "SVM Baseline", "Testing Accuracy": 0.9365, "Macro F1": 0.8687, "Recall Negative": 0.86, "Recall Neutral": 0.69},
+        {"Model": "SVM Grid Search Tuned", "Testing Accuracy": 0.9378, "Macro F1": 0.8633, "Recall Negative": 0.90, "Recall Neutral": 0.69},
+        {"Model": "LSTM", "Testing Accuracy": 0.9300, "Macro F1": 0.8695, "Recall Negative": 0.88, "Recall Neutral": 0.88},
     ]
 )
 st.dataframe(
     comparison.style.format(
         {
-            "Training Accuracy": "{:.2%}",
             "Testing Accuracy": "{:.2%}",
             "Macro F1": "{:.2%}",
+            "Recall Negative": "{:.2%}",
+            "Recall Neutral": "{:.2%}",
         }
     ),
     hide_index=True,
     use_container_width=True,
 )
-st.caption("Model final memakai Tuned LinearSVC karena macro F1 tertinggi di notebook modeling.")
+st.caption("Website ini memakai artefak SVM Data Murni dari notebook 02: `modeling/model_save/model_svm.pkl` dan `modeling/tfidf_vectorizer.pkl`.")
 
 
 
 with st.expander("Konfigurasi model terbaik"):
     st.write(
         {
-            "model": "Pipeline(Normalizer(norm='l2'), LinearSVC(class_weight='balanced'))",
-            "grid_search_best_params": meta["best_params"],
+            "model": "SVC(kernel='linear', C=1)",
+            "params": meta["best_params"],
             "tfidf": meta["tfidf"],
             "weighted_f1": round(float(weighted["f1-score"]), 4),
-            "catatan": "Confidence pada halaman prediksi berasal dari margin LinearSVC, bukan probabilitas asli.",
+            "catatan": "Confidence pada halaman prediksi berasal dari margin SVM, bukan probabilitas kalibrasi.",
         }
     )

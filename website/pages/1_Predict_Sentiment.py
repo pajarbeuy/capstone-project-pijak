@@ -20,7 +20,7 @@ text = st.text_area(
 
 col_submit, col_hint = st.columns([0.3, 0.7])
 predict_clicked = col_submit.button("Prediksi", type="primary", use_container_width=True)
-col_hint.caption("Pipeline: clean text -> normalisasi -> stopword removal -> stemming -> TF-IDF -> SVM")
+col_hint.caption("Pipeline notebook 02: cleaning -> case folding -> slang fixing -> stemming -> tokenizing -> stopword -> TF-IDF + SVM")
 
 if predict_clicked:
     if not text.strip():
@@ -35,7 +35,7 @@ if predict_clicked:
             with left:
                 sentiment_badge(result["label"])
                 st.metric("Confidence", f"{result['confidence']:.1%}")
-                st.caption("Confidence dihitung dari margin LinearSVC, bukan probabilitas kalibrasi.")
+                st.caption("Confidence dihitung dari margin SVM, bukan probabilitas kalibrasi.")
             with right:
                 label = result["label"]
                 color = LABEL_COLORS.get(label, "#94A3B8")
