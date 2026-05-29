@@ -1,6 +1,6 @@
 {
   "versi": "v1.0",
-  "timestamp": "20260502_2121",
+  "timestamp": "20260516_1135",
   "total_rows_raw": 65543,
   "total_rows_clean": 65273,
   "rows_removed": 270,
@@ -46,5 +46,5 @@
     "positive": 2
   },
   "dibuat_oleh": "Nurhayati Kusumaning Ayu (APC617D6X0220)",
-  "project": "VibeSight — AI-based Sentiment Analytics for Tokopedia Product Reviews"
+  "project": "Zenlytics — AI-based Sentiment Analytics for Tokopedia Product Reviews"
 }

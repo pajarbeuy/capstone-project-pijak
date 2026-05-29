@@ -1,8 +1,8 @@
-# Laporan Data Engineering Pipeline — VibeSight
+# Laporan Data Engineering Pipeline — Zenlytics
 
 **Proyek:** AI-based Sentiment Analytics for Tokopedia Product Reviews  
 **Data Engineer:** Nurhayati Kusumaning Ayu (APC617D6X0220)  
-**Versi:** v1.0 | **Tanggal:** 02 May 2026  
+**Versi:** v1.0 | **Tanggal:** 16 May 2026  
 **Sumber Data:** Kaggle — Tokopedia Product Reviews 2025  
 
 ---
