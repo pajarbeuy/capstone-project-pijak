@@ -1,5 +1,7 @@
 import streamlit as st
 
+from utils.auth import logout_button, require_login
+
 
 LABEL_COLORS = {
     "positive": "#22C55E",
@@ -20,19 +22,22 @@ LABEL_TEXT = {
 }
 
 
-def setup_page(title: str, icon: str = "📊") -> None:
+def setup_page(title: str, icon: str = "chart", require_auth: bool = True) -> None:
     st.set_page_config(
-        page_title=f"{title} | Dashboard Sentimen",
-        page_icon=icon,
+        page_title=f"{title} | Zenlytics Sentimen",
         layout="wide",
         initial_sidebar_state="expanded",
     )
     inject_css()
+    if require_auth:
+        require_login()
     with st.sidebar:
         st.markdown("### Dashboard Sentimen")
-        st.caption("AI Sentiment Analytics")
+        st.caption("Zenlytics Sentiment")
         st.divider()
         st.caption("Navigasi")
+        st.divider()
+        logout_button()
 
 
 def inject_css() -> None:
@@ -84,6 +89,28 @@ def inject_css() -> None:
         .small-note {
             color: #94A3B8;
             font-size: .88rem;
+        }
+        .login-hero {
+            max-width: 460px;
+            margin: 12vh auto 1.5rem auto;
+            text-align: center;
+        }
+        .login-hero h1 {
+            font-size: 2.25rem;
+            line-height: 1.15;
+            margin-bottom: .5rem;
+        }
+        .login-hero p {
+            color: #CBD5E1;
+            margin: 0;
+        }
+        div[data-testid="stForm"] {
+            max-width: 460px;
+            margin: 0 auto;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 8px;
+            padding: 1.25rem;
+            background: rgba(30, 41, 59, 0.72);
         }
         div[data-testid="stDataFrame"] {
             border: 1px solid rgba(148, 163, 184, 0.16);

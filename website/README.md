@@ -415,6 +415,39 @@ Buka browser:
 http://localhost:8502
 ```
 
+## Login dan Konfigurasi MySQL
+
+Semua halaman website sekarang dilindungi form login. Default lokal:
+
+```txt
+username: admin
+password: admin123
+```
+
+Untuk deployment, ubah kredensial lewat environment variable:
+
+```txt
+APP_USERNAME=admin
+APP_PASSWORD=password-yang-kuat
+```
+
+atau buat file `website/.streamlit/secrets.toml` dari contoh `website/.streamlit/secrets.example.toml`:
+
+```toml
+[auth]
+username = "admin"
+password = "password-yang-kuat"
+
+[mysql]
+host = "localhost"
+port = 3306
+database = "capstone_pijak"
+user = "root"
+password = ""
+```
+
+File konfigurasi MySQL ada di `utils/mysql_config.py`. Import `load_mysql_config()` untuk membaca konfigurasi, atau `get_mysql_connection()` jika ingin langsung membuka koneksi memakai `mysql-connector-python`.
+
 ## Cara Deploy ke Streamlit Community Cloud
 
 1. Push repository ke GitHub.
@@ -423,7 +456,6 @@ http://localhost:8502
    - `dashboard/requirements.txt`
    - `dashboard/model/model_svm_best.pkl`
    - `dashboard/model/tfidf_vectorizer.pkl`
-   - `data/processed/vibesight_ml_ready_v1.0.csv`
 3. Buka Streamlit Community Cloud.
 4. Connect repository GitHub.
 5. Set main file path:

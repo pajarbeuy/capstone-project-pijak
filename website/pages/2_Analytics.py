@@ -12,10 +12,10 @@ from utils.data import load_dataset
 from utils.ui import page_hero, setup_page
 
 
-setup_page("Analytics", "📊")
+setup_page("Analytics")
 page_hero(
     "Analytics Review",
-    "Eksplorasi kata, panjang review, dan distribusi `polarity` dari dataset notebook 02.",
+    "Eksplorasi kata, panjang review, dan distribusi `polarity` dari dataset.",
 )
 
 df = load_dataset()

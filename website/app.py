@@ -5,7 +5,7 @@ from utils.data import load_dataset, load_metadata, sentiment_summary
 from utils.ui import page_hero, setup_page
 
 
-setup_page("Dashboard", "🏠")
+setup_page("Dashboard")
 
 df = load_dataset()
 metadata = load_metadata()
@@ -13,7 +13,7 @@ summary = sentiment_summary(df)
 
 page_hero(
     "Sentiment Dashboard",
-    "Dashboard analisis sentimen review produk Tokopedia berbasis pipeline notebook 02.",
+    "Dashboard analisis sentimen review produk Tokopedia.",
 )
 
 total_reviews = len(df)
