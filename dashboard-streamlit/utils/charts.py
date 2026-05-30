@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras.preprocessing.sequence import pad_sequences
 
 try:
     from wordcloud import WordCloud
