@@ -120,7 +120,7 @@ def build_wordcloud(df: pd.DataFrame, label: str | None = None):
         colormap="viridis",
         max_words=120,
         collocations=False,
-    ).generate(text)
+    ).generate(text).to_array()
 
 
 @st.cache_data(show_spinner=False)

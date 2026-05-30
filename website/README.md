@@ -465,34 +465,3 @@ dashboard/app.py
 ```
 
 6. Deploy aplikasi.
-
-## Catatan Environment
-
-Model `.pkl` dibuat dari environment scikit-learn yang berbeda dari environment lokal saat ini. Jika muncul warning seperti `InconsistentVersionWarning`, model masih bisa berjalan, tetapi untuk deployment yang lebih stabil sebaiknya samakan versi scikit-learn dengan versi training.
-
-Rekomendasi:
-
-```txt
-scikit-learn==1.6.1
-```
-
-Jika deployment gagal karena versi dependency, pin versi dependency di `requirements.txt`.
-
-## Kesimpulan Model
-
-Model final memiliki accuracy tinggi, yaitu sekitar **97.40%**, tetapi Macro F1 berada di sekitar **57.38%**. Ini berarti model sangat baik dalam mengenali sentimen positif, tetapi masih terbatas dalam membedakan sentimen negatif dan netral.
-
-Penyebab utamanya adalah distribusi data yang sangat imbalanced. Kelas positive jauh lebih dominan dibanding negative dan neutral. Karena itu, Macro F1 digunakan sebagai metrik penting agar performa model tidak hanya dilihat dari accuracy.
-
-Kesimpulan yang tepat:
-
-> Model SVM sudah layak digunakan sebagai baseline dashboard sentimen dan cukup kuat untuk insight umum, tetapi masih perlu peningkatan pada kelas minoritas agar lebih sensitif terhadap review negatif dan netral.
-
-## Rekomendasi Pengembangan
-
-- Tambahkan data negative dan neutral agar distribusi kelas lebih seimbang.
-- Coba threshold adjustment atau calibration untuk kelas minoritas.
-- Evaluasi ulang dengan macro F1, recall negative, dan recall neutral sebagai metrik utama.
-- Simpan preprocessing pipeline sebagai artefak agar inference semakin konsisten.
-- Tambahkan filter analytics berdasarkan kategori produk, tahun, atau rating.
-- Tambahkan export visualisasi atau PDF report untuk kebutuhan presentasi.

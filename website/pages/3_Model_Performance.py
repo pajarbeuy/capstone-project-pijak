@@ -8,8 +8,8 @@ from utils.ui import page_hero, setup_page
 
 setup_page("Model Performance", "M")
 page_hero(
-    "Evaluasi Model SVM",
-    "Metrik mengikuti output notebook 02 bagian SVM Data Murni: text_akhir, polarity, split stratified 80:20, TF-IDF, lalu SVC linear.",
+    "Evaluasi Model LSTM",
+    "Berdasarkan dari notebook"
 )
 
 df_clean = load_modeling_dataset()
@@ -71,7 +71,7 @@ st.dataframe(
     hide_index=True,
     use_container_width=True,
 )
-st.caption("Website ini memakai artefak SVM Data Murni dari notebook 02: `modeling/model_save/model_svm.pkl` dan `modeling/tfidf_vectorizer.pkl`.")
+st.caption("Website ini memakai artefak LSTM Data Murni dari notebook 02: `modeling/model_save/model_lstm.h5` dan `modeling/lstm_tokenizer.pkl`.")
 
 
 

@@ -64,15 +64,12 @@ slangwords = {"@": "di", "abis": "habis", "wtb": "beli", "masi": "masih", "wts":
 EXTRA_STOPWORDS = {
     "iya",
     "yaa",
-    "gak",
     "nya",
     "na",
     "sih",
     "ku",
     "di",
-    "ga",
     "ya",
-    "gaa",
     "loh",
     "kah",
     "woi",
@@ -112,7 +109,7 @@ FALLBACK_STOPWORDS = {
     "untuk",
     "yang",
 }
-
+NEGASI_WORDS = {"tidak", "bukan", "belum", "jangan", "kurang", "tanpa"}
 
 def cleaning_text(text: str) -> str:
     text = re.sub(r"@[A-Za-z0-9]+", "", str(text))
@@ -148,9 +145,16 @@ def stemming_text(text: str) -> str:
     kind, stemmer = get_stemmer()
     if stemmer is None:
         return text
-    if kind == "mpstemmer":
-        return stemmer.stem_kalimat(text)
-    return " ".join(stemmer.stem(word) for word in str(text).split())
+    words = str(text).split()
+    result= []
+    for word in words:
+        if word in NEGASI_WORDS:
+            result.append(word)
+        elif kind == "mpstemmer":
+            result.append(stemmer.stem_kalimat(word))
+        else:
+            result.append(stemmer.stem(word))
+    return " ".join(result)
 
 
 def tokenizing_text(text: str) -> list[str]:
@@ -176,7 +180,7 @@ def get_stopwords() -> set[str]:
 
 
 def filtering_text(tokens: list[str]) -> list[str]:
-    stop_words = get_stopwords()
+    stop_words = get_stopwords() - NEGASI_WORDS
     return [token for token in tokens if token not in stop_words]
 
 
