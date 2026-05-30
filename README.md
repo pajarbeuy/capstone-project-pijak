@@ -445,7 +445,7 @@ GitHub:
 https://github.com/hilmanfaujiabdilah
 
 LinkedIn:
-https://www.linkedin.com/
+[Hilman Fauzi Abdilah](https://www.linkedin.com/in/hilman-fauji-abdilah/)
 
 Email:
-your-email@example.com
+hilmanfaujiabdilah@gmail.com
