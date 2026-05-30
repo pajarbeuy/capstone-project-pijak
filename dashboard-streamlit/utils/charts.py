@@ -152,22 +152,24 @@ def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
     except Exception as e:
         raise ValueError(f"Error saat prediksi: {str(e)}")
     
-    # Get confidence scores
-    try:
-        y_train_probs = model.predict_proba(x_train_vec)
-        y_test_probs = model.predict_proba(x_test_vec)
-    except AttributeError:
-        # For SVC without probability=True, use decision_function
-        y_train_probs = model.decision_function(x_train_vec)
-        y_test_probs = model.decision_function(x_test_vec)
-    
-    # Convert predictions to string labels (SVM returns string labels directly)
+    # Convert predictions to string labels
     y_train_pred = np.array([str(label).strip() for label in y_train_pred_encoded])
+    y_train_clean = np.array([str(label).strip() for label in y_train])
     y_pred = np.array([str(label).strip() for label in y_pred_encoded])
     y_true_clean = np.array([str(label).strip() for label in y_true])
 
     report = classification_report(y_true_clean, y_pred, output_dict=True, zero_division=0)
-    report_df = pd.DataFrame(report).T.reset_index().rename(columns={"index": "metric"})
+    report_data = []
+    for label, metrics in report.items():
+        if isinstance(metrics, dict):
+            report_data.append({
+                "metric": label,
+                "precision": metrics["precision"],
+                "recall": metrics["recall"],
+                "f1-score": metrics["f1-score"],
+                "support": metrics["support"]
+            })
+    report_df = pd.DataFrame(report_data)
 
     labels = ["negative", "neutral", "positive"]
     matrix = confusion_matrix(y_true_clean, y_pred, labels=labels)
@@ -176,10 +178,13 @@ def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
         index=labels,
         columns=labels,
     )
+    # Hitung accuracy dari weighted avg f1-score (sama dengan accuracy untuk multiclass)
+    test_accuracy = float(report.get("accuracy", report["weighted avg"]["f1-score"]))
     metadata = {
         "train_size": int(len(x_train)),
         "test_size": int(len(x_test)),
-        "train_accuracy": float((y_train_pred == y_train).mean()),
+        "test_accuracy": test_accuracy,
+        "train_accuracy": float((y_train_pred == y_train_clean).mean()),
         "best_params": {"kernel": "linear", "C": 1.0},
         "macro_f1": float(report["macro avg"]["f1-score"]),
         "svm_config": {

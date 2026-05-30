@@ -18,7 +18,9 @@ try:
     
     with st.spinner("Menghitung metrik evaluasi model..."):
         report_df, matrix_df, meta = model_performance(df_clean)
-    accuracy = float(report_df.loc[report_df["metric"] == "accuracy", "precision"].iloc[0])
+    # accuracy diambil dari meta (bukan report_df) karena classification_report
+    # mengembalikan "accuracy" sebagai scalar, bukan dict, sehingga tidak ada di report_df
+    accuracy = meta["test_accuracy"]
     macro = report_df.loc[report_df["metric"] == "macro avg"].iloc[0]
     weighted = report_df.loc[report_df["metric"] == "weighted avg"].iloc[0]
 
