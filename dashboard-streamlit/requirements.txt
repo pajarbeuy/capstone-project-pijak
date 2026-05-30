@@ -9,4 +9,4 @@ joblib
 Sastrawi
 nltk
 mysql-connector-python
-keras
+tf-keras
