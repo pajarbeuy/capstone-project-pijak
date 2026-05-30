@@ -1,8 +1,8 @@
 import numpy as np
 import joblib
 import streamlit as st
-from keras.models import load_model
-from keras.preprocessing.sequence import pad_sequences
+from tf_keras.models import load_model
+from tf_keras.preprocessing.sequence import pad_sequences
 
 from utils.paths import MODEL_PATH, VECTORIZER_PATH
 from utils.preprocessing import preprocess_text
