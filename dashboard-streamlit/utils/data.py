@@ -8,21 +8,29 @@ from utils.paths import DATA_PATH, METADATA_PATH
 
 
 LABEL_TO_ID = {"negative": 0, "neutral": 1, "positive": 2}
+# Kolom teks akhir hasil preprocessing notebook (setelah stopword removal)
 TEXT_FEATURE_COL = "text_akhir"
+# Kolom label sentimen di CSV
 TARGET_COL = "polarity"
 
 
 def prepare_notebook02_dataset(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    if "sentiment_label" in df.columns and "original_sentiment_label" not in df.columns:
-        df["original_sentiment_label"] = df["sentiment_label"]
+    """Standarisasi nama kolom agar konsisten di seluruh dashboard.
 
-    df["sentiment_label"] = df[TARGET_COL].astype(str)
+    CSV asli: text_akhir (teks sudah diproses), polarity (label sentimen)
+    Dashboard: review_text_stemmed (alias), sentiment_label (alias)
+    """
+    df = df.copy()
+
+    # Gunakan 'polarity' sebagai sentiment_label utama
+    df["sentiment_label"] = df[TARGET_COL].astype(str).str.strip()
     df["sentiment_encoded"] = df["sentiment_label"].map(LABEL_TO_ID).astype("Int64")
-    df["review_text_stemmed"] = df[TEXT_FEATURE_COL]
+
+    # Alias kolom teks akhir agar konsisten dengan kode dashboard lama
+    df["review_text_stemmed"] = df[TEXT_FEATURE_COL].fillna("").astype(str)
 
     if "review_word_count" not in df.columns:
-        df["review_word_count"] = df["review_text_stemmed"].fillna("").astype(str).str.split().str.len()
+        df["review_word_count"] = df["review_text_stemmed"].str.split().str.len()
     return df
 
 
