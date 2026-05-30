@@ -1,5 +1,6 @@
-import numpy as np
 import joblib
+import numpy as np
+# pyrefly: ignore [missing-import]
 import streamlit as st
 
 from utils.paths import MODEL_PATH, VECTORIZER_PATH
@@ -9,6 +10,7 @@ from utils.ui import LABEL_TEXT
 
 @st.cache_resource(show_spinner=False)
 def load_model_assets():
+    """Load model (SVM) dan vectorizer (TF-IDF) secara terpisah."""
     model = joblib.load(str(MODEL_PATH))
     vectorizer = joblib.load(str(VECTORIZER_PATH))
     return model, vectorizer
@@ -20,18 +22,18 @@ def predict_sentiment(text: str) -> dict:
     if not processed:
         raise ValueError("Teks terlalu pendek setelah preprocessing.")
 
-    # Vectorize text using TF-IDF
+    # Vectorize text using TF-IDF (yang sama persis dengan saat training)
     try:
         text_vector = vectorizer.transform([processed])
     except Exception as e:
         raise ValueError(f"Error saat vectorization: {str(e)}. Pastikan preprocessing konsisten.")
-    
+
     # Get predictions
     try:
         pred_label = str(model.predict(text_vector)[0])
     except Exception as e:
         raise ValueError(f"Error saat prediksi: {str(e)}")
-    
+
     # Calculate confidence
     try:
         pred_proba = model.predict_proba(text_vector)[0]
@@ -61,19 +63,19 @@ def predict_many(texts: list[str]) -> list[dict]:
     model, vectorizer = load_model_assets()
     processed = [preprocess_text(text) for text in texts]
     safe_processed = [text if text else " " for text in processed]
-    
+
     # Vectorize texts using TF-IDF
     try:
         text_vectors = vectorizer.transform(safe_processed)
     except Exception as e:
         raise ValueError(f"Error saat vectorization: {str(e)}")
-    
+
     # Get predictions
     try:
         pred_labels = model.predict(text_vectors)
     except Exception as e:
         raise ValueError(f"Error saat prediksi batch: {str(e)}")
-    
+
     # Calculate confidences
     try:
         pred_probas = model.predict_proba(text_vectors)
