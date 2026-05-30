@@ -48,9 +48,9 @@ with right:
 st.subheader("Hasil Modeling Notebook")
 model_cols = st.columns(4)
 model_cols[0].metric("Macro F1 Notebook", f"{meta['macro_f1']:.2%}")
-model_cols[1].metric("SVM C", str(meta["best_params"]["svm__C"]))
-model_cols[2].metric("Kernel", meta["best_params"]["svm__kernel"])
-model_cols[3].metric("TF-IDF Features", f"{meta['tfidf']['max_features']:,}")
+model_cols[1].metric("Epochs", str(meta["best_params"]["epochs"]))
+model_cols[2].metric("Optimizer", meta["best_params"]["optimizer"])
+model_cols[3].metric("Batch Size", str(meta["best_params"]["batch_size"]))
 
 comparison = pd.DataFrame(
     [
@@ -78,10 +78,10 @@ st.caption("Website ini memakai artefak LSTM Data Murni dari notebook 02: `model
 with st.expander("Konfigurasi model terbaik"):
     st.write(
         {
-            "model": "SVC(kernel='linear', C=1)",
+            "model": "LSTM Neural Network",
             "params": meta["best_params"],
-            "tfidf": meta["tfidf"],
+            "lstm_config": meta["lstm_config"],
             "weighted_f1": round(float(weighted["f1-score"]), 4),
-            "catatan": "Confidence pada halaman prediksi berasal dari margin SVM, bukan probabilitas kalibrasi.",
+            "catatan": "Confidence pada halaman prediksi berasal dari probabilitas output LSTM, bukan margin SVM.",
         }
     )

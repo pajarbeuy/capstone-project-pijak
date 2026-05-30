@@ -134,15 +134,13 @@ def fix_slangwords(text: str) -> str:
 
 @lru_cache(maxsize=1)
 def get_stemmer():
-    if MPStemmer is not None:
-        return ("mpstemmer", MPStemmer())
     if StemmerFactory is not None:
-        return ("sastrawi", StemmerFactory().create_stemmer())
-    return (None, None)
+        return StemmerFactory().create_stemmer()
+    return None
 
 
 def stemming_text(text: str) -> str:
-    kind, stemmer = get_stemmer()
+    stemmer = get_stemmer()
     if stemmer is None:
         return text
     words = str(text).split()
@@ -150,8 +148,6 @@ def stemming_text(text: str) -> str:
     for word in words:
         if word in NEGASI_WORDS:
             result.append(word)
-        elif kind == "mpstemmer":
-            result.append(stemmer.stem_kalimat(word))
         else:
             result.append(stemmer.stem(word))
     return " ".join(result)

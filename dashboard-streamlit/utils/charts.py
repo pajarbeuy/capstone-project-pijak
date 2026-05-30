@@ -1,11 +1,13 @@
 from collections import Counter
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 try:
     from wordcloud import WordCloud
@@ -125,7 +127,9 @@ def build_wordcloud(df: pd.DataFrame, label: str | None = None):
 
 @st.cache_data(show_spinner=False)
 def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
-    model, vectorizer = load_model_assets()
+    from utils.data import LABEL_TO_ID
+    
+    model, tokenizer = load_model_assets()
     x = df_clean["review_text_stemmed"].fillna("").astype(str).values
     y = df_clean["sentiment_label"].astype(str).values
 
@@ -137,10 +141,23 @@ def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
         stratify=y,
     )
 
-    x_train_tfidf = vectorizer.transform(x_train)
-    x_test_tfidf = vectorizer.transform(x_test)
-    y_train_pred = model.predict(x_train_tfidf)
-    y_pred = model.predict(x_test_tfidf)
+    # Convert to sequences and pad
+    x_train_seq = tokenizer.texts_to_sequences(x_train)
+    x_test_seq = tokenizer.texts_to_sequences(x_test)
+    x_train_padded = pad_sequences(x_train_seq, maxlen=100)
+    x_test_padded = pad_sequences(x_test_seq, maxlen=100)
+    
+    # Get predictions
+    y_train_probs = model.predict(x_train_padded, verbose=0)
+    y_train_pred_encoded = np.argmax(y_train_probs, axis=1)
+    
+    y_test_probs = model.predict(x_test_padded, verbose=0)
+    y_pred_encoded = np.argmax(y_test_probs, axis=1)
+    
+    # Convert encoded labels back to string labels
+    id_to_label = {v: k for k, v in LABEL_TO_ID.items()}
+    y_train_pred = np.array([id_to_label[i] for i in y_train_pred_encoded])
+    y_pred = np.array([id_to_label[i] for i in y_pred_encoded])
 
     report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
     report_df = pd.DataFrame(report).T.reset_index().rename(columns={"index": "metric"})
@@ -156,14 +173,13 @@ def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
         "train_size": int(len(x_train)),
         "test_size": int(len(x_test)),
         "train_accuracy": float((y_train_pred == y_train).mean()),
-        "best_params": {"svm__C": 1, "svm__kernel": "linear"},
+        "best_params": {"epochs": 10, "batch_size": 32, "optimizer": "adam"},
         "macro_f1": float(report["macro avg"]["f1-score"]),
-        "tfidf": {
-            "max_features": 10000,
-            "ngram_range": "(1, 2)",
-            "min_df": 17,
-            "max_df": 0.8,
-            "sublinear_tf": False,
+        "lstm_config": {
+            "maxlen": 100,
+            "embedding_dim": 128,
+            "lstm_units": 64,
+            "dropout": 0.2,
         },
     }
     return report_df, matrix_df, metadata
