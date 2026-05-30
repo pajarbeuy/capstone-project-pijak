@@ -1,20 +1,26 @@
 from collections import Counter
+import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+# pyrefly: ignore [missing-import]
 import plotly.express as px
+# pyrefly: ignore [missing-import]
 import plotly.graph_objects as go
+# pyrefly: ignore [missing-import]
 import streamlit as st
-from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.model_selection import train_test_split
 
 try:
+    # pyrefly: ignore [missing-import]
     from wordcloud import WordCloud
 except ImportError:
     WordCloud = None
 
-from utils.modeling import load_model_assets
 from utils.ui import LABEL_COLORS
+
+# Path ke pre-computed metrics JSON (di dalam folder dashboard-streamlit/model/)
+_METRICS_JSON = Path(__file__).resolve().parents[1] / "model" / "model_metrics.json"
 
 
 PLOTLY_TEMPLATE = "plotly_dark"
@@ -125,74 +131,28 @@ def build_wordcloud(df: pd.DataFrame, label: str | None = None):
 
 
 @st.cache_data(show_spinner=False)
-def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
-    model, vectorizer = load_model_assets()
-    x = df_clean["review_text_stemmed"].fillna("").astype(str).values
-    y = df_clean["sentiment_label"].astype(str).values
+def model_performance(_df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+    """Baca metrik evaluasi dari pre-computed model_metrics.json.
 
-    x_train, x_test, y_train, y_true = train_test_split(
-        x,
-        y,
-        test_size=0.2,
-        random_state=42,
-        stratify=y,
-    )
+    Sesuai CLAUDE.md: metrik harus berasal dari hasil training notebook,
+    bukan dihitung ulang di runtime (menghindari label mismatch di production).
+    """
+    if not _METRICS_JSON.exists():
+        raise FileNotFoundError(
+            f"File metrik tidak ditemukan: {_METRICS_JSON}. "
+            "Pastikan model/model_metrics.json ada di repository."
+        )
 
-    # Vectorize using TF-IDF
-    try:
-        x_train_vec = vectorizer.transform(x_train)
-        x_test_vec = vectorizer.transform(x_test)
-    except Exception as e:
-        raise ValueError(f"Error saat vectorization: {str(e)}")
-    
-    # Get predictions
-    try:
-        y_train_pred_encoded = model.predict(x_train_vec)
-        y_pred_encoded = model.predict(x_test_vec)
-    except Exception as e:
-        raise ValueError(f"Error saat prediksi: {str(e)}")
-    
-    # Convert predictions to string labels
-    y_train_pred = np.array([str(label).strip() for label in y_train_pred_encoded])
-    y_train_clean = np.array([str(label).strip() for label in y_train])
-    y_pred = np.array([str(label).strip() for label in y_pred_encoded])
-    y_true_clean = np.array([str(label).strip() for label in y_true])
+    with open(_METRICS_JSON, encoding="utf-8") as f:
+        data = json.load(f)
 
-    report = classification_report(y_true_clean, y_pred, output_dict=True, zero_division=0)
-    report_data = []
-    for label, metrics in report.items():
-        if isinstance(metrics, dict):
-            report_data.append({
-                "metric": label,
-                "precision": metrics["precision"],
-                "recall": metrics["recall"],
-                "f1-score": metrics["f1-score"],
-                "support": metrics["support"]
-            })
-    report_df = pd.DataFrame(report_data)
+    report_df = pd.DataFrame(data["classification_report"])
 
-    labels = ["negative", "neutral", "positive"]
-    matrix = confusion_matrix(y_true_clean, y_pred, labels=labels)
-    matrix_df = pd.DataFrame(
-        matrix,
-        index=labels,
-        columns=labels,
-    )
-    # Hitung accuracy dari weighted avg f1-score (sama dengan accuracy untuk multiclass)
-    test_accuracy = float(report.get("accuracy", report["weighted avg"]["f1-score"]))
-    metadata = {
-        "train_size": int(len(x_train)),
-        "test_size": int(len(x_test)),
-        "test_accuracy": test_accuracy,
-        "train_accuracy": float((y_train_pred == y_train_clean).mean()),
-        "best_params": {"kernel": "linear", "C": 1.0},
-        "macro_f1": float(report["macro avg"]["f1-score"]),
-        "svm_config": {
-            "vectorizer": "TfidfVectorizer",
-            "max_features": "default",
-            "kernel": "linear",
-        },
-    }
+    labels = data["confusion_matrix"]["labels"]
+    matrix = np.array(data["confusion_matrix"]["matrix"])
+    matrix_df = pd.DataFrame(matrix, index=labels, columns=labels)
+
+    metadata = data["meta"]
     return report_df, matrix_df, metadata
 
 
