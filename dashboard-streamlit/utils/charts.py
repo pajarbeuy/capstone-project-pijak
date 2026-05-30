@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 import streamlit as st
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
-from tf_keras.preprocessing.sequence import pad_sequences
 
 try:
     from wordcloud import WordCloud
@@ -129,7 +128,7 @@ def build_wordcloud(df: pd.DataFrame, label: str | None = None):
 def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     from utils.data import LABEL_TO_ID
     
-    model, tokenizer = load_model_assets()
+    model, vectorizer = load_model_assets()
     x = df_clean["review_text_stemmed"].fillna("").astype(str).values
     y = df_clean["sentiment_label"].astype(str).values
 
@@ -141,23 +140,26 @@ def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
         stratify=y,
     )
 
-    # Convert to sequences and pad
-    x_train_seq = tokenizer.texts_to_sequences(x_train)
-    x_test_seq = tokenizer.texts_to_sequences(x_test)
-    x_train_padded = pad_sequences(x_train_seq, maxlen=100)
-    x_test_padded = pad_sequences(x_test_seq, maxlen=100)
+    # Vectorize using TF-IDF
+    x_train_vec = vectorizer.transform(x_train)
+    x_test_vec = vectorizer.transform(x_test)
     
     # Get predictions
-    y_train_probs = model.predict(x_train_padded, verbose=0)
-    y_train_pred_encoded = np.argmax(y_train_probs, axis=1)
+    y_train_pred_encoded = model.predict(x_train_vec)
+    y_pred_encoded = model.predict(x_test_vec)
     
-    y_test_probs = model.predict(x_test_padded, verbose=0)
-    y_pred_encoded = np.argmax(y_test_probs, axis=1)
+    # Get confidence scores
+    try:
+        y_train_probs = model.predict_proba(x_train_vec)
+        y_test_probs = model.predict_proba(x_test_vec)
+    except AttributeError:
+        # For SVC without probability=True, use decision_function
+        y_train_probs = model.decision_function(x_train_vec)
+        y_test_probs = model.decision_function(x_test_vec)
     
-    # Convert encoded labels back to string labels
-    id_to_label = {v: k for k, v in LABEL_TO_ID.items()}
-    y_train_pred = np.array([id_to_label[i] for i in y_train_pred_encoded])
-    y_pred = np.array([id_to_label[i] for i in y_pred_encoded])
+    # Convert predictions to string labels (SVM returns string labels directly)
+    y_train_pred = np.array([str(label) for label in y_train_pred_encoded])
+    y_pred = np.array([str(label) for label in y_pred_encoded])
 
     report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
     report_df = pd.DataFrame(report).T.reset_index().rename(columns={"index": "metric"})
@@ -173,13 +175,12 @@ def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
         "train_size": int(len(x_train)),
         "test_size": int(len(x_test)),
         "train_accuracy": float((y_train_pred == y_train).mean()),
-        "best_params": {"epochs": 10, "batch_size": 32, "optimizer": "adam"},
+        "best_params": {"kernel": "linear", "C": 1.0},
         "macro_f1": float(report["macro avg"]["f1-score"]),
-        "lstm_config": {
-            "maxlen": 100,
-            "embedding_dim": 128,
-            "lstm_units": 64,
-            "dropout": 0.2,
+        "svm_config": {
+            "vectorizer": "TfidfVectorizer",
+            "max_features": "default",
+            "kernel": "linear",
         },
     }
     return report_df, matrix_df, metadata

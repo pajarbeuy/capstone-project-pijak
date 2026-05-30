@@ -4,8 +4,11 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = BASE_DIR.parent
 
-MODEL_PATH = PROJECT_ROOT / "model-result" / "model_save" / "model_lstm.h5"
-VECTORIZER_PATH = PROJECT_ROOT / "model-result" / "lstm_tokenizer.pkl"
+# Model & Vectorizer paths - sesuai CLAUDE.md specification
+MODEL_PATH = PROJECT_ROOT / "modeling" / "model_svm_best.pkl"
+VECTORIZER_PATH = PROJECT_ROOT / "model-result" / "model_save" / "tfidf_vectorizer.pkl"
+
+# Dataset paths
 DATA_PATH = PROJECT_ROOT / "dataset" / "tokopedia_reviews.csv"
 TRAIN_PATH = PROJECT_ROOT / "dataset" / "tokopedia_reviews.csv"
 TEST_PATH = PROJECT_ROOT / "dataset" / "tokopedia_reviews.csv"
