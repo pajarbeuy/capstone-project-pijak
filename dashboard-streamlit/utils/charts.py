@@ -126,8 +126,6 @@ def build_wordcloud(df: pd.DataFrame, label: str | None = None):
 
 @st.cache_data(show_spinner=False)
 def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
-    from utils.data import LABEL_TO_ID
-    
     model, vectorizer = load_model_assets()
     x = df_clean["review_text_stemmed"].fillna("").astype(str).values
     y = df_clean["sentiment_label"].astype(str).values
@@ -141,12 +139,18 @@ def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
     )
 
     # Vectorize using TF-IDF
-    x_train_vec = vectorizer.transform(x_train)
-    x_test_vec = vectorizer.transform(x_test)
+    try:
+        x_train_vec = vectorizer.transform(x_train)
+        x_test_vec = vectorizer.transform(x_test)
+    except Exception as e:
+        raise ValueError(f"Error saat vectorization: {str(e)}")
     
     # Get predictions
-    y_train_pred_encoded = model.predict(x_train_vec)
-    y_pred_encoded = model.predict(x_test_vec)
+    try:
+        y_train_pred_encoded = model.predict(x_train_vec)
+        y_pred_encoded = model.predict(x_test_vec)
+    except Exception as e:
+        raise ValueError(f"Error saat prediksi: {str(e)}")
     
     # Get confidence scores
     try:
@@ -158,14 +162,15 @@ def model_performance(df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
         y_test_probs = model.decision_function(x_test_vec)
     
     # Convert predictions to string labels (SVM returns string labels directly)
-    y_train_pred = np.array([str(label) for label in y_train_pred_encoded])
-    y_pred = np.array([str(label) for label in y_pred_encoded])
+    y_train_pred = np.array([str(label).strip() for label in y_train_pred_encoded])
+    y_pred = np.array([str(label).strip() for label in y_pred_encoded])
+    y_true_clean = np.array([str(label).strip() for label in y_true])
 
-    report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
+    report = classification_report(y_true_clean, y_pred, output_dict=True, zero_division=0)
     report_df = pd.DataFrame(report).T.reset_index().rename(columns={"index": "metric"})
 
     labels = ["negative", "neutral", "positive"]
-    matrix = confusion_matrix(y_true, y_pred, labels=labels)
+    matrix = confusion_matrix(y_true_clean, y_pred, labels=labels)
     matrix_df = pd.DataFrame(
         matrix,
         index=labels,

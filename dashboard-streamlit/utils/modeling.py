@@ -21,10 +21,16 @@ def predict_sentiment(text: str) -> dict:
         raise ValueError("Teks terlalu pendek setelah preprocessing.")
 
     # Vectorize text using TF-IDF
-    text_vector = vectorizer.transform([processed])
+    try:
+        text_vector = vectorizer.transform([processed])
+    except Exception as e:
+        raise ValueError(f"Error saat vectorization: {str(e)}. Pastikan preprocessing konsisten.")
     
     # Get predictions
-    pred_label = str(model.predict(text_vector)[0])
+    try:
+        pred_label = str(model.predict(text_vector)[0])
+    except Exception as e:
+        raise ValueError(f"Error saat prediksi: {str(e)}")
     
     # Calculate confidence
     try:
@@ -32,13 +38,16 @@ def predict_sentiment(text: str) -> dict:
         confidence = float(np.max(pred_proba))
     except AttributeError:
         # For SVC without probability=True, use decision_function
-        decision = model.decision_function(text_vector)
-        # decision shape is (1, n_classes) for multi-class or (1,) for binary
-        if decision.ndim > 1:
-            decision = np.max(np.abs(decision[0]))
-        else:
-            decision = np.abs(decision[0])
-        confidence = float(1 / (1 + np.exp(-decision)))  # Sigmoid normalization
+        try:
+            decision = model.decision_function(text_vector)
+            # decision shape is (1, n_classes) for multi-class or (1,) for binary
+            if decision.ndim > 1:
+                decision = np.max(np.abs(decision[0]))
+            else:
+                decision = np.abs(decision[0])
+            confidence = float(1 / (1 + np.exp(-decision)))  # Sigmoid normalization
+        except Exception:
+            confidence = 0.5
 
     return {
         "label": pred_label,
@@ -54,10 +63,16 @@ def predict_many(texts: list[str]) -> list[dict]:
     safe_processed = [text if text else " " for text in processed]
     
     # Vectorize texts using TF-IDF
-    text_vectors = vectorizer.transform(safe_processed)
+    try:
+        text_vectors = vectorizer.transform(safe_processed)
+    except Exception as e:
+        raise ValueError(f"Error saat vectorization: {str(e)}")
     
     # Get predictions
-    pred_labels = model.predict(text_vectors)
+    try:
+        pred_labels = model.predict(text_vectors)
+    except Exception as e:
+        raise ValueError(f"Error saat prediksi batch: {str(e)}")
     
     # Calculate confidences
     try:
@@ -65,15 +80,18 @@ def predict_many(texts: list[str]) -> list[dict]:
         confidences = np.max(pred_probas, axis=1)
     except AttributeError:
         # For SVC without probability=True, use decision_function
-        decisions = model.decision_function(text_vectors)
-        # decisions shape is (n_samples, n_classes) for multi-class or (n_samples,) for binary
-        if decisions.ndim > 1:
-            # Multi-class: take max absolute value per sample
-            confidences = np.max(np.abs(decisions), axis=1)
-        else:
-            # Binary: take absolute value
-            confidences = np.abs(decisions)
-        confidences = 1 / (1 + np.exp(-confidences))  # Sigmoid normalization
+        try:
+            decisions = model.decision_function(text_vectors)
+            # decisions shape is (n_samples, n_classes) for multi-class or (n_samples,) for binary
+            if decisions.ndim > 1:
+                # Multi-class: take max absolute value per sample
+                confidences = np.max(np.abs(decisions), axis=1)
+            else:
+                # Binary: take absolute value
+                confidences = np.abs(decisions)
+            confidences = 1 / (1 + np.exp(-confidences))  # Sigmoid normalization
+        except Exception:
+            confidences = np.full(len(pred_labels), 0.5)
 
     results = []
     for pred_label, source, conf in zip(pred_labels, processed, confidences):
