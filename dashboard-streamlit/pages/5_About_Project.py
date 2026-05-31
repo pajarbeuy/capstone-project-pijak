@@ -8,7 +8,7 @@ setup_page("About Project", "ℹ️")
 metadata = load_metadata()
 
 page_hero(
-    "About VibeSight",
+    "About Zenlytics",
     "AI-based Sentiment Analytics for Tokopedia Product Reviews.",
 )
 
@@ -32,7 +32,7 @@ st.markdown(
 st.subheader("Metadata")
 st.json(
     {
-        "project": metadata.get("project", "VibeSight"),
+        "project": metadata.get("project", "Zenlytics"),
         "version": metadata.get("versi", "v1.0"),
         "created_by": metadata.get("dibuat_oleh", "Nurhayati Kusumaning Ayu"),
         "rows_clean": metadata.get("total_rows_clean"),

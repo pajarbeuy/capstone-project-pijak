@@ -1,12 +1,11 @@
 streamlit
 pandas
 numpy
-scikit-learn
+scikit-learn==1.6.1
 plotly
 matplotlib
 wordcloud
 joblib
 Sastrawi
 nltk
-mpstemmer
 mysql-connector-python
