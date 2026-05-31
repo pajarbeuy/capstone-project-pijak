@@ -6,6 +6,6 @@ plotly
 matplotlib
 wordcloud
 joblib
-Sastrawi
+PySastrawi
 nltk
 mysql-connector-python
