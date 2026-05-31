@@ -132,23 +132,62 @@ def build_wordcloud(df: pd.DataFrame, label: str | None = None):
 
 @st.cache_data(show_spinner=False)
 def model_performance(_df_clean: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
-    """Baca metrik evaluasi dari pre-computed model_metrics.json."""
-    if not _METRICS_JSON.exists():
-        raise FileNotFoundError(
-            f"File metrik tidak ditemukan: {_METRICS_JSON}. "
-            "Pastikan model/model_metrics.json ada di repository."
-        )
+    """Hitung metrik evaluasi secara otomatis dari data dan model.
 
-    with open(_METRICS_JSON, encoding="utf-8") as f:
-        data = json.load(f)
+    Menggunakan label normalization agar kompatibel dengan model yang
+    di-train dengan label integer (0,1,2) maupun string (negative/neutral/positive).
+    """
+    # Mapping dari label integer ke string (untuk kompatibilitas)
+    ID_TO_LABEL = {"0": "negative", "1": "neutral", "2": "positive"}
+    ORDERED_LABELS = ["negative", "neutral", "positive"]
 
-    report_df = pd.DataFrame(data["classification_report"])
+    model, vectorizer = load_model_assets()
+    x = _df_clean["review_text_stemmed"].fillna("").astype(str).values
+    y_raw = _df_clean["sentiment_label"].astype(str).str.strip().values
+    # Normalisasi label ground truth: "0"->"negative", dll jika perlu
+    y = np.array([ID_TO_LABEL.get(v, v) for v in y_raw])
 
-    labels = data["confusion_matrix"]["labels"]
-    matrix = np.array(data["confusion_matrix"]["matrix"])
-    matrix_df = pd.DataFrame(matrix, index=labels, columns=labels)
+    x_train, x_test, y_train, y_true = train_test_split(
+        x, y,
+        test_size=0.2,
+        random_state=42,
+        stratify=y,
+    )
 
-    return report_df, matrix_df, data["meta"]
+    x_train_vec = vectorizer.transform(x_train)
+    x_test_vec = vectorizer.transform(x_test)
+
+    y_train_pred_raw = model.predict(x_train_vec)
+    y_pred_raw = model.predict(x_test_vec)
+
+    # Normalisasi prediksi: handle integer (0,1,2) atau string label
+    y_train_pred = np.array([ID_TO_LABEL.get(str(v).strip(), str(v).strip()) for v in y_train_pred_raw])
+    y_pred = np.array([ID_TO_LABEL.get(str(v).strip(), str(v).strip()) for v in y_pred_raw])
+
+    report = classification_report(y_true, y_pred, labels=ORDERED_LABELS, output_dict=True, zero_division=0)
+    report_df = pd.DataFrame([
+        {"metric": label, **metrics}
+        for label, metrics in report.items()
+        if isinstance(metrics, dict)
+    ])
+
+    matrix = confusion_matrix(y_true, y_pred, labels=ORDERED_LABELS)
+    matrix_df = pd.DataFrame(matrix, index=ORDERED_LABELS, columns=ORDERED_LABELS)
+
+    test_accuracy = float(report.get("accuracy", report["weighted avg"]["f1-score"]))
+    metadata = {
+        "train_size": int(len(x_train)),
+        "test_size": int(len(x_test)),
+        "test_accuracy": test_accuracy,
+        "train_accuracy": float((y_train_pred == y_train).mean()),
+        "macro_f1": float(report["macro avg"]["f1-score"]),
+        "svm_config": {
+            "vectorizer": "TfidfVectorizer",
+            "max_features": "default",
+            "kernel": "linear",
+        },
+    }
+    return report_df, matrix_df, metadata
 
 
 def confusion_matrix_chart(matrix_df: pd.DataFrame) -> go.Figure:
